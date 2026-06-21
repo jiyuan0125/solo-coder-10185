@@ -10,6 +10,7 @@ http://page3.tdx.com.cn:7615/site/pcwebcall_static/bxb/bxb.html?code=600811&colo
 
 import pandas as pd
 
+from adata.common.exception import handler_null
 from adata.common.utils import requests
 
 
@@ -24,6 +25,7 @@ class MineClearance(object):
         "reason",
     ]
 
+    @handler_null
     def mine_clearance_tdx(self, stock_code='600811'):
         """
         通达信扫雷信息

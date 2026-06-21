@@ -10,6 +10,7 @@ https://vip.stock.finance.sina.com.cn/mkt/#hskzz_z
 import pandas as pd
 
 from adata.bond.market.bond_market_template import BondMarketTemplate
+from adata.common.exception import handler_null
 from adata.common.utils import requests
 
 
@@ -19,6 +20,7 @@ class BondMarketSina(BondMarketTemplate):
     def __init__(self) -> None:
         super().__init__()
 
+    @handler_null
     def list_market_current(self, code_list=None):
         """
        获取新浪的最新可转债行情

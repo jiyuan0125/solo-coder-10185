@@ -16,6 +16,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 
 from adata.common import requests
+from adata.common.exception import handler_null
 from adata.common.headers import ths_headers
 from adata.common.utils import cookie
 
@@ -23,6 +24,7 @@ from adata.common.utils import cookie
 class StockLifting:
     __STOCK_LIFTING_COLUMN = ["stock_code", "short_name", "lift_date", "volume", "amount", "ratio", "price"]
 
+    @handler_null
     def stock_lifting_last_month(self):
         """
         查询最近一个月的股票解禁列表

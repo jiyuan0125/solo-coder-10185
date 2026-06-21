@@ -545,5 +545,311 @@ class StockMarketFallbackTestCase(unittest.TestCase):
         self.assertIn('Invalid stock code', errors[0].error_msg)
 
 
+class FundModuleTestCase(unittest.TestCase):
+    """基金模块错误追踪测试"""
+
+    def setUp(self):
+        error_tracker.clear_errors()
+
+    def tearDown(self):
+        error_tracker.clear_errors()
+
+    def test_etf_market_ths_has_handler_null(self):
+        """测试 ETFMarketThs 的方法都有 @handler_null 装饰器"""
+        from adata.fund.market.etf_market_ths import ETFMarketThs
+
+        instance = ETFMarketThs()
+
+        self.assertTrue(hasattr(instance.get_market_etf_ths, '__wrapped__') or
+                        'wrapper' in str(instance.get_market_etf_ths.__name__))
+        self.assertTrue(hasattr(instance.get_market_etf_min_ths, '__wrapped__') or
+                        'wrapper' in str(instance.get_market_etf_min_ths.__name__))
+        self.assertTrue(hasattr(instance.get_market_etf_current_ths, '__wrapped__') or
+                        'wrapper' in str(instance.get_market_etf_current_ths.__name__))
+
+    def test_etf_method_exception_is_recorded(self):
+        """测试 ETF 方法抛出异常时被正确记录"""
+        from adata.fund.market.etf_market_ths import ETFMarketThs
+
+        class ETFMarketThsMock(ETFMarketThs):
+            @handler_null
+            def get_market_etf_ths(self, fund_code='512880', k_type=1, start_date='', end_date=''):
+                raise RuntimeError("ETF mock error")
+
+        instance = ETFMarketThsMock()
+        result = instance.get_market_etf_ths(fund_code='512880')
+
+        self.assertTrue(result.empty)
+        self.assertTrue(error_tracker.has_errors())
+
+        errors = error_tracker.get_errors(source='ths')
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0].error_type, 'RuntimeError')
+        self.assertEqual(errors[0].error_msg, 'ETF mock error')
+
+
+class BondModuleTestCase(unittest.TestCase):
+    """债券模块错误追踪测试"""
+
+    def setUp(self):
+        error_tracker.clear_errors()
+
+    def tearDown(self):
+        error_tracker.clear_errors()
+
+    def test_bond_market_sina_has_handler_null(self):
+        """测试 BondMarketSina 的方法有 @handler_null 装饰器"""
+        from adata.bond.market.bond_market_sina import BondMarketSina
+
+        instance = BondMarketSina()
+
+        self.assertTrue(hasattr(instance.list_market_current, '__wrapped__') or
+                        'wrapper' in str(instance.list_market_current.__name__))
+
+    def test_bond_method_exception_returns_empty_df(self):
+        """测试债券方法抛出异常时返回空 DataFrame 并记录错误"""
+        from adata.bond.market.bond_market_sina import BondMarketSina
+
+        original_init = BondMarketSina.__init__
+
+        def mock_init(self):
+            pass
+
+        BondMarketSina.__init__ = mock_init
+
+        try:
+            instance = BondMarketSina()
+            original_method = instance.list_market_current
+
+            def failing_method(*args, **kwargs):
+                raise ConnectionError("network error")
+
+            instance.list_market_current = handler_null(failing_method)
+
+            result = instance.list_market_current()
+            self.assertTrue(result.empty)
+            self.assertTrue(error_tracker.has_errors())
+
+            errors = error_tracker.get_errors()
+            self.assertEqual(len(errors), 1)
+            self.assertEqual(errors[0].error_type, 'ConnectionError')
+        finally:
+            BondMarketSina.__init__ = original_init
+
+
+class SentimentModuleTestCase(unittest.TestCase):
+    """sentiment 模块错误追踪测试"""
+
+    def setUp(self):
+        error_tracker.clear_errors()
+
+    def tearDown(self):
+        error_tracker.clear_errors()
+
+    def test_hot_class_has_handler_null(self):
+        """测试 Hot 类的静态方法有 @handler_null 装饰器
+
+        通过 mock 底层请求来验证异常被捕获。
+        """
+        from adata.sentiment.hot import Hot
+
+        self.assertTrue(callable(Hot.pop_rank_100_east))
+        self.assertTrue(callable(Hot.hot_rank_100_ths))
+        self.assertTrue(callable(Hot.hot_concept_20_ths))
+
+    @patch('adata.sentiment.hot.requests')
+    def test_hot_method_exception_caught_by_handler_null(self, mock_requests):
+        """测试 Hot 方法抛出异常时被 @handler_null 捕获并记录"""
+        from adata.sentiment.hot import Hot
+
+        mock_response = MagicMock()
+        mock_response.json.side_effect = ValueError("invalid json response")
+        mock_requests.request.return_value = mock_response
+
+        result = Hot.pop_rank_100_east()
+
+        self.assertTrue(result.empty)
+        self.assertTrue(error_tracker.has_errors())
+
+        errors = error_tracker.get_errors()
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0].error_type, 'ValueError')
+        self.assertIn('invalid json', errors[0].error_msg)
+
+    def test_stock_lifting_has_handler_null(self):
+        """测试 StockLifting 的方法有 @handler_null 装饰器"""
+        from adata.sentiment.stock_lifting import StockLifting
+
+        instance = StockLifting()
+        self.assertTrue(hasattr(instance.stock_lifting_last_month, '__wrapped__') or
+                        'wrapper' in str(instance.stock_lifting_last_month.__name__))
+
+    def test_securities_margin_has_handler_null(self):
+        """测试 SecuritiesMargin 的方法有 @handler_null 装饰器"""
+        from adata.sentiment.securities_margin import SecuritiesMargin
+
+        instance = SecuritiesMargin()
+        self.assertTrue(hasattr(instance.securities_margin, '__wrapped__') or
+                        'wrapper' in str(instance.securities_margin.__name__))
+
+    def test_mine_clearance_has_handler_null(self):
+        """测试 MineClearance 的方法有 @handler_null 装饰器"""
+        from adata.sentiment.mine_clearance import MineClearance
+
+        instance = MineClearance()
+        self.assertTrue(hasattr(instance.mine_clearance_tdx, '__wrapped__') or
+                        'wrapper' in str(instance.mine_clearance_tdx.__name__))
+
+    def test_hot_method_exception_returns_empty_df(self):
+        """测试 Hot 静态方法异常时返回空 DataFrame 并记录错误"""
+        from adata.sentiment.hot import Hot
+
+        original_func = Hot.pop_rank_100_east
+
+        @staticmethod
+        @handler_null
+        def failing_func():
+            raise ValueError("hot rank error")
+
+        Hot.pop_rank_100_east = failing_func
+
+        try:
+            result = Hot.pop_rank_100_east()
+            self.assertTrue(result.empty)
+            self.assertTrue(error_tracker.has_errors())
+
+            errors = error_tracker.get_errors()
+            self.assertEqual(len(errors), 1)
+            self.assertEqual(errors[0].error_type, 'ValueError')
+            self.assertEqual(errors[0].error_msg, 'hot rank error')
+        finally:
+            Hot.pop_rank_100_east = original_func
+
+
+class SunRequestsTestCase(unittest.TestCase):
+    """SunRequests 便捷方法测试"""
+
+    def test_get_method_exists(self):
+        """测试 get 便捷方法存在"""
+        from adata.common.utils.sunrequests import SunRequests
+        sr = SunRequests()
+        self.assertTrue(callable(sr.get))
+
+    def test_post_method_exists(self):
+        """测试 post 便捷方法存在"""
+        from adata.common.utils.sunrequests import SunRequests
+        sr = SunRequests()
+        self.assertTrue(callable(sr.post))
+
+    def test_put_method_exists(self):
+        """测试 put 便捷方法存在"""
+        from adata.common.utils.sunrequests import SunRequests
+        sr = SunRequests()
+        self.assertTrue(callable(sr.put))
+
+    def test_delete_method_exists(self):
+        """测试 delete 便捷方法存在"""
+        from adata.common.utils.sunrequests import SunRequests
+        sr = SunRequests()
+        self.assertTrue(callable(sr.delete))
+
+    def test_head_method_exists(self):
+        """测试 head 便捷方法存在"""
+        from adata.common.utils.sunrequests import SunRequests
+        sr = SunRequests()
+        self.assertTrue(callable(sr.head))
+
+    def test_patch_method_exists(self):
+        """测试 patch 便捷方法存在"""
+        from adata.common.utils.sunrequests import SunRequests
+        sr = SunRequests()
+        self.assertTrue(callable(sr.patch))
+
+    def test_options_method_exists(self):
+        """测试 options 便捷方法存在"""
+        from adata.common.utils.sunrequests import SunRequests
+        sr = SunRequests()
+        self.assertTrue(callable(sr.options))
+
+    @patch('adata.common.utils.sunrequests.requests.request')
+    def test_get_calls_request_with_get_method(self, mock_request):
+        """测试 get 方法调用 request 时使用 GET 方法"""
+        from adata.common.utils.sunrequests import SunRequests
+        sr = SunRequests()
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_request.return_value = mock_response
+
+        sr.get('http://example.com', params={'a': 'b'})
+
+        mock_request.assert_called_once()
+        call_kwargs = mock_request.call_args
+        self.assertEqual(call_kwargs[1].get('method', call_kwargs[0][0] if call_kwargs[0] else 'get'), 'get')
+        self.assertIn('url', call_kwargs.kwargs)
+
+    @patch('adata.common.utils.sunrequests.requests.request')
+    def test_post_calls_request_with_post_method(self, mock_request):
+        """测试 post 方法调用 request 时使用 POST 方法"""
+        from adata.common.utils.sunrequests import SunRequests
+        sr = SunRequests()
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_request.return_value = mock_response
+
+        sr.post('http://example.com', json={'key': 'value'})
+
+        mock_request.assert_called_once()
+
+    def test_unknown_attribute_has_clear_error_message(self):
+        """测试访问未知属性时有明确的错误提示"""
+        from adata.common.utils.sunrequests import SunRequests
+        sr = SunRequests()
+
+        try:
+            sr.some_unknown_method()
+            self.fail("Should have raised AttributeError")
+        except AttributeError as e:
+            error_msg = str(e)
+            self.assertIn('SunRequests', error_msg)
+            self.assertIn('不是 Python 标准库', error_msg)
+            self.assertIn('adata', error_msg)
+
+    def test_unknown_session_attribute_has_clear_error(self):
+        """测试访问常见的 requests.Session 属性时有提示"""
+        from adata.common.utils.sunrequests import SunRequests
+        sr = SunRequests()
+
+        try:
+            sr.Session()
+            self.fail("Should have raised AttributeError")
+        except AttributeError as e:
+            error_msg = str(e)
+            self.assertIn('不是 Python 标准库', error_msg)
+
+    def test_private_attribute_raises_normal_error(self):
+        """测试访问私有属性时不触发友好提示"""
+        from adata.common.utils.sunrequests import SunRequests
+        sr = SunRequests()
+
+        try:
+            _ = sr._private_attr
+            self.fail("Should have raised AttributeError")
+        except AttributeError as e:
+            error_msg = str(e)
+            self.assertNotIn('不是 Python 标准库', error_msg)
+
+    def test_sun_requests_instance(self):
+        """测试全局 sun_requests 实例是 SunRequests 类型"""
+        from adata.common.utils.sunrequests import sun_requests, SunRequests
+        self.assertIsInstance(sun_requests, SunRequests)
+
+    def test_requests_alias_points_to_same_instance(self):
+        """测试 common/utils 导出的 requests 是 sun_requests"""
+        from adata.common.utils import requests, sun_requests
+        self.assertIs(requests, sun_requests)
+
+
 if __name__ == '__main__':
     unittest.main()

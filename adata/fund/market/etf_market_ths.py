@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 from adata.common.base.base_ths import BaseThs
+from adata.common.exception import handler_null, error_tracker
 from adata.common.exception.exception_msg import *
 from adata.fund.market.etf_market_template import ETFMarketTemplate
 
@@ -21,6 +22,7 @@ class ETFMarketThs(BaseThs, ETFMarketTemplate):
     股票概念 行情
     """
 
+    @handler_null
     def get_market_etf_ths(self, fund_code: str = '512880', k_type: int = 1, start_date='', end_date=''):
         """
         获取同花顺的ETF的行情
@@ -41,7 +43,7 @@ class ETFMarketThs(BaseThs, ETFMarketTemplate):
         # 同花顺可能ip限制，降低请求次数
         text = self._get_text(api_url, fund_code)
         if THS_IP_LIMIT_RES in text:
-            return Exception(THS_IP_LIMIT_MSG)
+            raise Exception(THS_IP_LIMIT_MSG)
         result_json = json.loads(text[text.index('{'):-1])
         if result_json['total'] == 0:
             return pd.DataFrame()
@@ -70,6 +72,7 @@ class ETFMarketThs(BaseThs, ETFMarketTemplate):
         result_df = result_df[(result_df['trade_date'] >= start_date) & (result_df['trade_date'] <= end_date)]
         return result_df[self._MARKET_COLUMNS]
 
+    @handler_null
     def get_market_etf_min_ths(self, fund_code='512880'):
         """
         获取etf行情当日分时
@@ -84,7 +87,7 @@ class ETFMarketThs(BaseThs, ETFMarketTemplate):
         api_url = f"http://d.10jqka.com.cn/v6/time/hs_{fund_code}/last.js"
         text = self._get_text(api_url, fund_code)
         if THS_IP_LIMIT_RES in text:
-            return Exception(THS_IP_LIMIT_MSG)
+            raise Exception(THS_IP_LIMIT_MSG)
         # 2. 解析数据
         result_json = json.loads(text[text.index('{'):-1])[f"hs_{fund_code}"]
         pre_price = result_json['pre']
@@ -109,6 +112,7 @@ class ETFMarketThs(BaseThs, ETFMarketTemplate):
         result_df.replace(np.nan, None, inplace=True)
         return result_df[self._MARKET_ETF_MIN_COLUMNS]
 
+    @handler_null
     def get_market_etf_current_ths(self, fund_code: str = '512880', k_type: int = 1):
         """
         获取同花顺当前的概念行情
@@ -132,7 +136,7 @@ class ETFMarketThs(BaseThs, ETFMarketTemplate):
         # 同花顺可能ip限制，降低请求次数
         text = self._get_text(api_url, fund_code)
         if THS_IP_LIMIT_RES in text:
-            return Exception(THS_IP_LIMIT_MSG)
+            raise Exception(THS_IP_LIMIT_MSG)
         result_text = text[text.index('{'):-1]
         data_list = [json.loads(result_text)[f"hs_{fund_code}"]]
         rename = {'1': 'trade_date', '7': 'open', '8': 'high', '9': 'low', '11': 'price', '13': 'volume',

@@ -18,12 +18,14 @@ from datetime import datetime
 import pandas as pd
 
 from adata.common import requests
+from adata.common.exception import handler_null
 from adata.common.headers import east_headers
 
 
 class SecuritiesMargin:
     __SECURITIES_MARGIN_COLUMN = ["trade_date", "rzye", "rqye", "rzrqye", "rzrqyecz"]
 
+    @handler_null
     def securities_margin(self, start_date=None):
         """
         查询开始时间到现在的融资融券余额数据，默认：查询最近一年的数据

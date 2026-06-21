@@ -11,6 +11,7 @@ https://eq.10jqka.com.cn/frontend/thsTopRank/index.html?fontzoom=no&client_useri
 """
 import pandas as pd
 
+from adata.common.exception import handler_null
 from adata.common.headers import ths_headers
 from adata.common.utils import requests
 from adata.sentiment.alist import AList
@@ -21,6 +22,7 @@ class Hot(AList):  # 参考 pylint 改完之后实际上这个 Hot 和 AList 没
 
     # 东方财富人气榜
     @staticmethod
+    @handler_null
     def pop_rank_100_east():
         """
         东方财富人气榜100
@@ -67,6 +69,7 @@ class Hot(AList):  # 参考 pylint 改完之后实际上这个 Hot 和 AList 没
         return rank_df[["rank", "stock_code", "short_name", "price", "change", "change_pct"]]
 
     @staticmethod
+    @handler_null
     def hot_rank_100_ths():
         """
         同花顺热股100
@@ -102,6 +105,7 @@ class Hot(AList):  # 参考 pylint 改完之后实际上这个 Hot 和 AList 没
         return rank_df
 
     @staticmethod
+    @handler_null
     def hot_concept_20_ths(plate_type=1):
         """
         同花热门概念板块
