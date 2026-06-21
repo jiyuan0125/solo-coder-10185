@@ -22,6 +22,7 @@ import pandas as pd
 import adata  # 函数内 import，挪过来
 from adata.common import requests
 from adata.common.base.base_ths import BaseThs
+from adata.common.exception import record_empty_fallback
 from adata.common.exception.exception_msg import THS_IP_LIMIT_RES, THS_IP_LIMIT_MSG
 from adata.common.headers import ths_headers
 
@@ -136,6 +137,7 @@ class NorthFlow(BaseThs):
         res = self.__north_flow_min_east()
         # res = pd.DataFrame()
         if res.empty:
+            record_empty_fallback('east', 'north_flow_min')
             res = self.__north_flow_min_ths()
         return res
 

@@ -26,6 +26,7 @@ class SunProxy(object):
             with SunProxy._instance_lock:
                 if not hasattr(SunProxy, "_instance"):
                     SunProxy._instance = object.__new__(cls)
+        return SunProxy._instance
 
     @classmethod
     def set(cls, key, value):

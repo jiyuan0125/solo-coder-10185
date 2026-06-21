@@ -29,8 +29,14 @@ def compile_exchange_by_stock_code(stock_code):
 
 
 def get_exchange_by_stock_code(stock_code):
-    """根据股票代码补全市场后缀"""
-    return exchange_suffix[stock_code[0:2]][1:]
+    """根据股票代码获取交易所代码
+
+    不认识的代码前缀返回原值，不会抛出异常。
+    """
+    prefix = stock_code[0:2]
+    if prefix in exchange_suffix:
+        return exchange_suffix[prefix][1:]
+    return stock_code
 
 
 if __name__ == '__main__':

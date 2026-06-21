@@ -10,6 +10,7 @@ import logging
 
 from adata.__version__ import __version__
 from adata.bond import bond
+from adata.common.exception import error_tracker
 from adata.common.utils.sunrequests import SunProxy
 from adata.fund import fund
 from adata.sentiment import sentiment

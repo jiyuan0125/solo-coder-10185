@@ -9,6 +9,7 @@ TODO 数据返回类型转换
 
 import pandas as pd
 
+from adata.common.exception import record_empty_fallback
 from adata.stock.market.stock_market.stock_market_baidu import StockMarketBaiDu
 from adata.stock.market.stock_market.stock_market_east import StockMarketEast
 from adata.stock.market.stock_market.stock_market_qq import StockMarketQQ
@@ -50,6 +51,7 @@ class StockMarket(object):
         """
         df = self.east_market.get_market_min(stock_code=stock_code)
         if df.empty:
+            record_empty_fallback('east', 'get_market_min')
             return self.baidu_market.get_market_min(stock_code=stock_code)
         return df
 
@@ -72,6 +74,7 @@ class StockMarket(object):
         df = self.sina_market.list_market_current(code_list=code_list)
         # 2. 然后腾讯
         if df.empty:
+            record_empty_fallback('sina', 'list_market_current')
             df = self.qq_market.list_market_current(code_list=code_list)
         return df
 
@@ -84,6 +87,7 @@ class StockMarket(object):
         """
         res_df = self.qq_market.get_market_five(stock_code=stock_code)
         if res_df.empty:
+            record_empty_fallback('qq', 'get_market_five')
             res_df = self.baidu_market.get_market_five(stock_code=stock_code)
         return res_df
 
@@ -95,6 +99,7 @@ class StockMarket(object):
         """
         res_df = self.baidu_market.get_market_bar(stock_code=stock_code)
         if res_df.empty:
+            record_empty_fallback('baidu', 'get_market_bar')
             res_df = self.qq_market.get_market_bar(stock_code=stock_code)
         return res_df
 
