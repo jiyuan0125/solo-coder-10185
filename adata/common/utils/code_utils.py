@@ -21,7 +21,8 @@ exchange_suffix = {
 
 def compile_exchange_by_stock_code(stock_code):
     """根据股票代码补全市场后缀"""
-
+    if not stock_code or len(stock_code) < 2:
+        return stock_code
     prefix = stock_code[0:2]
     if prefix in exchange_suffix:
         return stock_code + exchange_suffix[prefix]
@@ -30,7 +31,10 @@ def compile_exchange_by_stock_code(stock_code):
 
 def get_exchange_by_stock_code(stock_code):
     """根据股票代码补全市场后缀"""
-    return exchange_suffix[stock_code[0:2]][1:]
+    if not stock_code or len(stock_code) < 2:
+        return ''
+    suffix = exchange_suffix.get(stock_code[0:2])
+    return suffix[1:] if suffix else ''
 
 
 if __name__ == '__main__':

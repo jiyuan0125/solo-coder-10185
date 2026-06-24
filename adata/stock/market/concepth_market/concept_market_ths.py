@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 
 from adata.common.base.base_ths import BaseThs
-from adata.common.exception.exception_msg import *
+from adata.common.exception.exception_msg import THS_IP_LIMIT_RES, THS_IP_LIMIT_MSG, AdataError
 from adata.stock.market.concepth_market.concept_market_template import ConceptMarketTemplate
 
 
@@ -46,7 +46,7 @@ class ConceptMarketThs(BaseThs, ConceptMarketTemplate):
         # 同花顺可能ip限制，降低请求次数
         text = self._get_text(api_url, index_code)
         if THS_IP_LIMIT_RES in text:
-            return Exception(THS_IP_LIMIT_MSG)
+            raise AdataError(THS_IP_LIMIT_MSG, source="ths", op_type="get_market_concept_ths")
         result_text = text[text.index('{'):-1]
         data_list = json.loads(result_text)['data'].split(';')
         data = []
@@ -84,7 +84,7 @@ class ConceptMarketThs(BaseThs, ConceptMarketTemplate):
         api_url = f"http://d.10jqka.com.cn/v6/time/48_{index_code}/last.js"
         text = self._get_text(api_url, index_code)
         if THS_IP_LIMIT_RES in text:
-            return Exception(THS_IP_LIMIT_MSG)
+            raise AdataError(THS_IP_LIMIT_MSG, source="ths", op_type="get_market_concept_min_ths")
         # 2. 解析数据
         result_json = json.loads(text[text.index('{'):-1])[f"48_{index_code}"]
         pre_price = result_json['pre']
@@ -134,7 +134,7 @@ class ConceptMarketThs(BaseThs, ConceptMarketTemplate):
         # 同花顺可能ip限制，降低请求次数
         text = self._get_text(api_url, index_code)
         if THS_IP_LIMIT_RES in text:
-            return Exception(THS_IP_LIMIT_MSG)
+            raise AdataError(THS_IP_LIMIT_MSG, source="ths", op_type="get_market_concept_current_ths")
         result_text = text[text.index('{'):-1]
         data_list = [json.loads(result_text)[f"48_{index_code}"]]
         rename = {'1': 'trade_date', '7': 'open', '8': 'high', '9': 'low', '11': 'price', '13': 'volume',

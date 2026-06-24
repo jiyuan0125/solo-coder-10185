@@ -15,7 +15,7 @@ import pandas as pd
 
 from adata.common import requests
 from adata.common.base.base_ths import BaseThs
-from adata.common.exception.exception_msg import THS_IP_LIMIT_RES, THS_IP_LIMIT_MSG
+from adata.common.exception.exception_msg import THS_IP_LIMIT_RES, THS_IP_LIMIT_MSG, AdataError
 
 
 class FundInfo(BaseThs):
@@ -64,7 +64,7 @@ class FundInfo(BaseThs):
                 continue
             text = res.text.encode('utf-8').decode('unicode escape')
             if THS_IP_LIMIT_RES in text:
-                return Exception(THS_IP_LIMIT_MSG)
+                raise AdataError(THS_IP_LIMIT_MSG, source="ths", op_type="all_etf_exchange_traded_info_ths")
             if 'ETF(场内)' not in text:
                 break
             res_json = res.json()

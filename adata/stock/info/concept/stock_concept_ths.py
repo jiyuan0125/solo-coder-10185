@@ -22,7 +22,7 @@ import math
 import pandas as pd
 from bs4 import BeautifulSoup
 
-from adata.common.exception.exception_msg import *
+from adata.common.exception.exception_msg import THS_IP_LIMIT_RES, THS_IP_LIMIT_MSG, AdataError
 from adata.common.headers import ths_headers
 from adata.common.utils import cookie
 from adata.common.utils import requests
@@ -148,7 +148,7 @@ class StockConceptThs(StockConceptTemplate):
                 continue
             text = res.text
             if THS_IP_LIMIT_RES in text:
-                return Exception(THS_IP_LIMIT_MSG)
+                raise AdataError(THS_IP_LIMIT_MSG, source="ths", op_type="concept_constituent_by_concept_code")
             if '暂无成份股数据' in text or '概念板块' in text or '概念时间表' in text:
                 break
             soup = BeautifulSoup(text, 'html.parser')
@@ -190,7 +190,7 @@ class StockConceptThs(StockConceptTemplate):
         # 同花顺可能ip限制，降低请求次数
         text = res.text
         if THS_IP_LIMIT_RES in text:
-            return Exception(THS_IP_LIMIT_MSG)
+            raise AdataError(THS_IP_LIMIT_MSG, source="ths", op_type="concept_constituent_by_index_code")
         # 2. 解析总数
         result_json = json.loads(text[text.index('{'):-1])
         total_count = float(result_json['block']['subcodeCount'])
@@ -245,7 +245,7 @@ class StockConceptThs(StockConceptTemplate):
                 continue
             text = res.text.encode('utf-8').decode('unicode escape')
             if THS_IP_LIMIT_RES in text:
-                return Exception(THS_IP_LIMIT_MSG)
+                raise AdataError(THS_IP_LIMIT_MSG, source="ths", op_type="concept_constituent_by_name")
             if name not in text:
                 break
             res_json = res.json()

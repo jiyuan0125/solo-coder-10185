@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 from adata.common.base.base_ths import BaseThs
-from adata.common.exception.exception_msg import *
+from adata.common.exception.exception_msg import THS_IP_LIMIT_RES, THS_IP_LIMIT_MSG, AdataError
 from adata.common.headers import ths_headers
 from adata.stock.cache.index_code_rel_ths import rel
 from adata.stock.market.index_market.market_index_template import StockMarketIndexTemplate
@@ -44,7 +44,7 @@ class StockMarketIndexThs(BaseThs, StockMarketIndexTemplate):
             # 同花顺可能ip限制，降低请求次数
             text = self._get_text(api_url, concept_code)
             if THS_IP_LIMIT_RES in text:
-                return Exception(THS_IP_LIMIT_MSG)
+                raise AdataError(THS_IP_LIMIT_MSG, source="ths", op_type="get_market_index")
             # 为空继续
             if not text:
                 continue
@@ -89,7 +89,7 @@ class StockMarketIndexThs(BaseThs, StockMarketIndexTemplate):
         api_url = f"http://d.10jqka.com.cn/v4/time/zs_{concept_code}/last.js"
         text = self._get_text(api_url, concept_code)
         if THS_IP_LIMIT_RES in text:
-            return Exception(THS_IP_LIMIT_MSG)
+            raise AdataError(THS_IP_LIMIT_MSG, source="ths", op_type="get_market_index_min")
         if not text:
             return pd.DataFrame(data=[], columns=self._MARKET_INDEX_MIN_COLUMNS)
         # 2. 解析数据
@@ -139,7 +139,7 @@ class StockMarketIndexThs(BaseThs, StockMarketIndexTemplate):
         # 同花顺可能ip限制，降低请求次数
         text = self._get_text(api_url, concept_code)
         if THS_IP_LIMIT_RES in text:
-            return Exception(THS_IP_LIMIT_MSG)
+            raise AdataError(THS_IP_LIMIT_MSG, source="ths", op_type="get_market_index_current")
         result_text = text[text.index('{'):-1]
         data_list = [json.loads(result_text)[f"zs_{concept_code}"]]
         rename = {'1': 'trade_date', '7': 'open', '8': 'high', '9': 'low', '11': 'price', '13': 'volume',

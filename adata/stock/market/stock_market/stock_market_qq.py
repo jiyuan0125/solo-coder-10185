@@ -147,7 +147,10 @@ class StockMarketQQ(StockMarketTemplate):
                 df = pd.DataFrame(eval(text[text.find("["):])[1].split("|")).iloc[:, 0].str.split("/", expand=True)
                 if df.empty:
                     break
-            except:
+            except Exception as exc:
+                from adata.common.exception.tracker import tracker
+                tracker.record_exception(source="qq", op_type="get_market_bar_page",
+                                         message=str(exc))
                 break
             res_df = pd.concat([res_df, df], ignore_index=True)
         if res_df.empty:

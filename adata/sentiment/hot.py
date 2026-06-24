@@ -87,7 +87,10 @@ class Hot(AList):  # 参考 pylint 改完之后实际上这个 Hot 和 AList 没
                 if "popularity_tag" in d["tag"]:
                     d["pop_tag"] = d["tag"]["popularity_tag"].replace("\n", "")
                 data_list.append(d)
-            except:
+            except Exception as exc:
+                from adata.common.exception.tracker import tracker
+                tracker.record_exception(source="ths", op_type="hot_rank_tag_parse",
+                                         message=str(exc))
                 pass
         rename = {
             "order": "rank",

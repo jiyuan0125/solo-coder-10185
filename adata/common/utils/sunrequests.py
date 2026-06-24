@@ -22,10 +22,11 @@ class SunProxy(object):
         pass
 
     def __new__(cls, *args, **kwargs):
-        if not hasattr(SunProxy, "_instance"):
+        if not getattr(SunProxy, "_instance", None):
             with SunProxy._instance_lock:
-                if not hasattr(SunProxy, "_instance"):
+                if not getattr(SunProxy, "_instance", None):
                     SunProxy._instance = object.__new__(cls)
+        return SunProxy._instance
 
     @classmethod
     def set(cls, key, value):

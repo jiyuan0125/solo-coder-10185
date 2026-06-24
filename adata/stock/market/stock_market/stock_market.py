@@ -9,10 +9,19 @@ TODO 数据返回类型转换
 
 import pandas as pd
 
+from adata.common.exception.tracker import tracker
 from adata.stock.market.stock_market.stock_market_baidu import StockMarketBaiDu
 from adata.stock.market.stock_market.stock_market_east import StockMarketEast
 from adata.stock.market.stock_market.stock_market_qq import StockMarketQQ
 from adata.stock.market.stock_market.stock_market_sina import StockMarketSina
+
+
+def _attach_fallback_meta(df, from_source, to_source, op_type):
+    df.attrs["_adata_event_type"] = "fallback"
+    df.attrs["_adata_from_source"] = from_source
+    df.attrs["_adata_source"] = to_source
+    df.attrs["_adata_op_type"] = op_type
+    return df
 
 
 class StockMarket(object):
@@ -50,7 +59,9 @@ class StockMarket(object):
         """
         df = self.east_market.get_market_min(stock_code=stock_code)
         if df.empty:
-            return self.baidu_market.get_market_min(stock_code=stock_code)
+            tracker.record_fallback(from_source="east", to_source="baidu", op_type="get_market_min")
+            result = self.baidu_market.get_market_min(stock_code=stock_code)
+            return _attach_fallback_meta(result, "east", "baidu", "get_market_min")
         return df
 
     def list_market_current(self, code_list=None):
@@ -72,7 +83,9 @@ class StockMarket(object):
         df = self.sina_market.list_market_current(code_list=code_list)
         # 2. 然后腾讯
         if df.empty:
+            tracker.record_fallback(from_source="sina", to_source="qq", op_type="list_market_current")
             df = self.qq_market.list_market_current(code_list=code_list)
+            return _attach_fallback_meta(df, "sina", "qq", "list_market_current")
         return df
 
     def get_market_five(self, stock_code: str = '000001'):
@@ -84,7 +97,9 @@ class StockMarket(object):
         """
         res_df = self.qq_market.get_market_five(stock_code=stock_code)
         if res_df.empty:
+            tracker.record_fallback(from_source="qq", to_source="baidu", op_type="get_market_five")
             res_df = self.baidu_market.get_market_five(stock_code=stock_code)
+            return _attach_fallback_meta(res_df, "qq", "baidu", "get_market_five")
         return res_df
 
     def get_market_bar(self, stock_code: str = '000001'):
@@ -95,7 +110,9 @@ class StockMarket(object):
         """
         res_df = self.baidu_market.get_market_bar(stock_code=stock_code)
         if res_df.empty:
+            tracker.record_fallback(from_source="baidu", to_source="qq", op_type="get_market_bar")
             res_df = self.qq_market.get_market_bar(stock_code=stock_code)
+            return _attach_fallback_meta(res_df, "baidu", "qq", "get_market_bar")
         return res_df
 
 

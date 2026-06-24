@@ -22,6 +22,7 @@ import pandas as pd
 
 from adata.common import requests
 from adata.common.exception.handler import handler_null
+from adata.common.exception.tracker import tracker
 from adata.common.headers import baidu_headers
 from adata.common.utils.code_utils import get_exchange_by_stock_code
 from adata.stock.cache import get_code_csv_path
@@ -46,10 +47,13 @@ class StockCode(object):
         # 请求数据：优先百度，东方财富
         res_df = self.__market_rank_baidu(wait_time)
         if res_df.empty or len(res_df) < 5000:
+            tracker.record_fallback(from_source="baidu", to_source="east", op_type="all_code")
             res_df = self.__market_rank_east(wait_time)
         if res_df.empty or len(res_df) < 5000:
+            tracker.record_fallback(from_source="east", to_source="sina", op_type="all_code")
             res_df = self.market_rank_sina(wait_time)
         if res_df.empty:
+            tracker.record_fallback(from_source="sina", to_source="csv_cache", op_type="all_code")
             res_df = pd.read_csv(get_code_csv_path())
         east = self.__new_sub_east(wait_time)
         if not east.empty:

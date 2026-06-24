@@ -22,7 +22,7 @@ import pandas as pd
 import adata  # 函数内 import，挪过来
 from adata.common import requests
 from adata.common.base.base_ths import BaseThs
-from adata.common.exception.exception_msg import THS_IP_LIMIT_RES, THS_IP_LIMIT_MSG
+from adata.common.exception.exception_msg import THS_IP_LIMIT_RES, THS_IP_LIMIT_MSG, AdataError
 from adata.common.headers import ths_headers
 
 
@@ -134,8 +134,9 @@ class NorthFlow(BaseThs):
         https://data.hexin.cn/market/hsgtApi/method/dayChart/
         """
         res = self.__north_flow_min_east()
-        # res = pd.DataFrame()
         if res.empty:
+            from adata.common.exception.tracker import tracker
+            tracker.record_fallback(from_source="east", to_source="ths", op_type="north_flow_min")
             res = self.__north_flow_min_ths()
         return res
 
@@ -153,7 +154,7 @@ class NorthFlow(BaseThs):
         res = requests.request("get", api_url, headers=headers, proxies={})
         text = res.text
         if THS_IP_LIMIT_RES in text:
-            return Exception(THS_IP_LIMIT_MSG)
+            raise AdataError(THS_IP_LIMIT_MSG, source="ths", op_type="north_flow_min")
         if not text:
             return pd.DataFrame(data=[], columns=self.__NORTH_FLOW_CURRENT_COLUMNS)
         # 2. 解析数据
@@ -213,7 +214,10 @@ class NorthFlow(BaseThs):
                             math.ceil(float(row[3]) * 10000),
                         ]
                     )
-        except Exception:  # pylint: disable=broad-except
+        except Exception as exc:  # pylint: disable=broad-except
+            from adata.common.exception.tracker import tracker
+            tracker.record_exception(source="east", op_type="north_flow_min_east",
+                                     message=str(exc))
             print("north_flow_min_east is ERROR!!!")
             return pd.DataFrame(data=data, columns=self.__NORTH_FLOW_MIN_COLUMNS)
         result_df = pd.DataFrame(data=data, columns=self.__NORTH_FLOW_MIN_COLUMNS)

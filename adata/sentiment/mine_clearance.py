@@ -33,9 +33,12 @@ class MineClearance(object):
         url = f"http://page3.tdx.com.cn:7615/site/pcwebcall_static/bxb/json/{stock_code}.json"
         try:
             res = requests.request(method="get", url=url, json={}).json()
-        except:
-            res = pd.DataFrame([{"stock_code": '', "short_name": '', "score": '', "f_type": '暂无数据', }],
-                               columns=self.__MINE_TDX_COLUMNS)
+        except Exception as exc:
+            from adata.common.exception.tracker import tracker
+            tracker.record_exception(source="tdx", op_type="mine_clearance_tdx",
+                                     message=str(exc))
+            return pd.DataFrame([{"stock_code": stock_code, "short_name": '', "score": '', "f_type": '暂无数据', }],
+                                columns=self.__MINE_TDX_COLUMNS)
         name = res.get("name")
         data = res.get("data")
         data_list = []

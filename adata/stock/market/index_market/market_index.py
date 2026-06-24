@@ -4,6 +4,7 @@
 @author: 1nchaos
 @date: 2023/06/01 16:17
 """
+from adata.common.exception.tracker import tracker
 from adata.stock.market.index_market.market_index_baidu import StockMarketIndexBaidu
 from adata.stock.market.index_market.market_index_east import StockMarketIndexEast
 from adata.stock.market.index_market.market_index_ths import StockMarketIndexThs
@@ -28,6 +29,7 @@ class StockMarketIndex(object):
         # if res_df.empty:
         res_df = self.east_index.get_market_index(index_code=index_code, start_date=start_date, k_type=k_type)
         if res_df.empty:
+            tracker.record_fallback(from_source="east", to_source="ths", op_type="get_market_index")
             res_df = self.ths_index.get_market_index(index_code=index_code, start_date=start_date, k_type=k_type)
         return res_df
 
@@ -40,6 +42,7 @@ class StockMarketIndex(object):
         """
         res_df = self.east_index.get_market_index_min(index_code=index_code)
         if res_df.empty:
+            tracker.record_fallback(from_source="east", to_source="ths", op_type="get_market_index_min")
             res_df = self.ths_index.get_market_index_min(index_code=index_code)
         return res_df
 
